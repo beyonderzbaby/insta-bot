@@ -1,99 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Insta Connect Mini App</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    .insta-gradient { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
-    .glass-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insta Connect Mini App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-<body class="pb-10 select-none">
+<body class="bg-gray-900 text-white min-h-screen p-4 flex flex-col items-center justify-center">
 
-  <header class="sticky top-0 z-50 bg-black/90 border-b border-zinc-800 px-4 py-3 flex justify-between items-center">
-    <div class="flex items-center gap-2">
-      <div class="w-7 h-7 rounded-full insta-gradient p-[2px]">
-        <div class="w-full h-full bg-black rounded-full flex items-center justify-center">
-          <i data-lucide="instagram" class="w-4 h-4 text-white"></i>
+    <div class="w-full max-w-md bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <span class="w-3 h-3 bg-red-500 rounded-full inline-block"></span> Insta Connect
+        </h2>
+
+        <div class="mb-4">
+            <label class="block text-sm text-gray-400 mb-2">Connect Profile</label>
+            <div class="flex gap-2">
+                <input type="text" id="usernameInput" placeholder="@username" 
+                    class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                <button id="connectBtn" onclick="fetchProfile()" 
+                    class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold px-6 py-3 rounded-xl transition-all">
+                    Connect
+                </button>
+            </div>
         </div>
-      </div>
-      <span class="font-bold text-base">Insta Connect</span>
+
+        <div id="statusBox" class="hidden mt-4 p-4 bg-gray-900 rounded-xl border border-gray-700 text-sm text-gray-300">
+            Status: <span id="statusText">Processing...</span>
+        </div>
     </div>
-    <span class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-700">TMA Live</span>
-  </header>
 
-  <main class="max-w-md mx-auto p-4 space-y-5">
-    <section class="glass-card p-4 rounded-2xl space-y-3">
-      <h2 class="text-sm font-bold text-zinc-200">Connect Profile</h2>
-      <div class="relative">
-        <span class="absolute left-3 top-3 text-zinc-500 text-sm">@</span>
-        <input id="usernameInput" type="text" placeholder="username" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-2.5 pl-7 pr-24 text-sm text-white focus:outline-none focus:border-pink-500" />
-        <button id="connectBtn" onclick="fetchInstagramData()" class="absolute right-1 top-1 bottom-1 px-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg text-xs font-semibold hover:opacity-90 active:scale-95 transition-all">Connect</button>
-      </div>
-    </section>
-
-    <section id="profileCard" class="hidden glass-card p-4 rounded-2xl space-y-4">
-      <div class="flex items-center gap-3">
-        <div class="w-14 h-14 rounded-full insta-gradient p-[2px]">
-          <img id="userAvatar" src="" class="w-full h-full object-cover rounded-full bg-zinc-800" />
-        </div>
-        <div>
-          <h3 id="userFullName" class="font-bold text-sm text-white"></h3>
-          <p id="userHandle" class="text-xs text-zinc-400"></p>
-          <span class="inline-block mt-1 text-[9px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">Connected</span>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-3 gap-2 text-center bg-zinc-900/80 p-2.5 rounded-xl border border-zinc-800 text-xs">
-        <div><p id="statPosts" class="font-bold text-white">0</p><span class="text-[10px] text-zinc-400">Posts</span></div>
-        <div><p id="statFollowers" class="font-bold text-white">0</p><span class="text-[10px] text-zinc-400">Followers</span></div>
-        <div><p id="statFollowing" class="font-bold text-white">0</p><span class="text-[10px] text-zinc-400">Following</span></div>
-      </div>
-
-      <div class="space-y-2">
-        <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Reels & Media</h4>
-        <div id="reelsGrid" class="grid grid-cols-3 gap-2"></div>
-      </div>
-    </section>
-  </main>
-
-  <script>
-async function fetchProfile() {
-    const usernameInput = document.getElementById('usernameInput'); // Apne input ID ke hisab se confirm karein
-    const username = usernameInput ? usernameInput.value.trim() : 'b4nugcs';
-    
-    if (!username) {
-        alert("Please enter a valid Instagram username!");
-        return;
-    }
-
-    const BACKEND_URL = `https://insta-backend-1ig5.onrender.com/api/instagram/${username}`;
-
-    try {
-        console.log("Fetching from:", BACKEND_URL);
-        const response = await fetch(BACKEND_URL);
-
-        if (!response.ok) {
-            throw new Error(`Server returned status: ${response.status}`);
+    <script>
+        // Telegram WebApp Initialize
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
         }
 
-        const data = await response.json();
-        console.log("Profile Data:", data);
+        async function fetchProfile() {
+            const input = document.getElementById('usernameInput');
+            const btn = document.getElementById('connectBtn');
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
 
-        // Yahan par data render karne ka code
-        alert("Data Fetched Successfully! Check Console.");
+            let username = input.value.trim().replace('@', '');
+            if (!username) {
+                alert("Kripya Instagram Username enter karein!");
+                return;
+            }
 
-    } catch (error) {
-        console.error("Fetch Error:", error);
-        alert("Connection Error: " + error.message);
-    }
-}
-</script>
+            // UI State updates
+            btn.disabled = true;
+            btn.innerText = "Fetching...";
+            statusBox.classList.remove('hidden');
+            statusText.innerText = "Server se connect ho raha hai (Sleep mode se jaagne me 20-30s lag sakte hain)...";
 
+            const BACKEND_URL = `https://insta-backend-1ig5.onrender.com/api/instagram/${username}`;
+
+            try {
+                // Extended Timeout for Render Cold Start
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+                const response = await fetch(BACKEND_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`Server status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                statusText.innerText = "Data mil gaya!";
+                alert("Success! Profile Data: " + JSON.stringify(data));
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    statusText.innerText = "Server wake-up time pass ho gaya. Ek baar fir Connect dabayein.";
+                    alert("Server waking up, kripya 5 second baad dobara try karein.");
+                } else {
+                    statusText.innerText = "Error: " + error.message;
+                    alert("Connection Error: " + error.message);
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Connect";
+            }
+        }
+    </script>
 </body>
 </html>
+
