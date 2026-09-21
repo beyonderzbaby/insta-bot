@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
-// 1. CORS Headers (Telegram Mini App / GitHub Pages connection ke liye)
+// 1. Enable CORS Headers for GitHub Pages & Telegram WebView
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -15,31 +15,29 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Root route check
+// Root test endpoint
 app.get('/', (req, res) => {
     res.send('Instagram Analytics Backend is Live!');
 });
 
-// 2. Instagram API Route (Apify Integration)
+// 2. Instagram Fetch Endpoint via Apify
 app.get('/api/instagram/:username', async (req, res) => {
     const username = req.params.username;
     const apiKey = process.env.APIFY_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({ error: "APIFY_API_KEY is missing in Render environment variables!" });
+        return res.status(500).json({ error: "APIFY_API_KEY missing on Render environment variables!" });
     }
 
     try {
-        console.log(`Fetching data for username: ${username}`);
-        
-        // Apify Instagram Scraper Actor Call
+        console.log(`Fetching profile for: ${username}`);
         const apifyUrl = `https://api.apify.com/v2/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=${apiKey}`;
         
         const response = await axios.post(apifyUrl, {
             usernames: [username]
         }, {
             headers: { 'Content-Type': 'application/json' },
-            timeout: 55000 // 55 seconds timeout
+            timeout: 55000
         });
 
         if (response.data && response.data.length > 0) {
@@ -47,7 +45,6 @@ app.get('/api/instagram/:username', async (req, res) => {
         } else {
             return res.status(404).json({ error: "Profile not found or no data returned." });
         }
-
     } catch (error) {
         console.error("Apify Error:", error.message);
         return res.status(500).json({ 
@@ -57,7 +54,6 @@ app.get('/api/instagram/:username', async (req, res) => {
     }
 });
 
-// 3. Server Port Config
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
