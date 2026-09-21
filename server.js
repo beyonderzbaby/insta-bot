@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
-// 1. Enable CORS Headers for GitHub Pages & Telegram WebView
+// 1. Enable Manual CORS Headers (Fixes "Failed to Fetch" in Telegram)
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -15,18 +15,18 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Root test endpoint
+// 2. Root route (Fixes the "Not Found" screen in your browser)
 app.get('/', (req, res) => {
     res.send('Instagram Analytics Backend is Live!');
 });
 
-// 2. Instagram Fetch Endpoint via Apify
+// 3. Instagram Profile Scraper Route
 app.get('/api/instagram/:username', async (req, res) => {
     const username = req.params.username;
     const apiKey = process.env.APIFY_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({ error: "APIFY_API_KEY missing on Render environment variables!" });
+        return res.status(500).json({ error: "APIFY_API_KEY is missing in Render environment variables!" });
     }
 
     try {
@@ -54,6 +54,7 @@ app.get('/api/instagram/:username', async (req, res) => {
     }
 });
 
+// 4. Start Server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
