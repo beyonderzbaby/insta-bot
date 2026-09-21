@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Insta Connect Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    .insta-gradient { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+    .glass-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="pb-10 select-none">
+
+  <header class="sticky top-0 z-50 bg-black/90 border-b border-zinc-800 px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-full insta-gradient p-[2px]">
+        <div class="w-full h-full bg-black rounded-full flex items-center justify-center">
+          <i data-lucide="instagram" class="w-4 h-4 text-white"></i>
+        </div>
+      </div>
+      <span class="font-bold text-base">Insta Connect</span>
+    </div>
+    <span class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-700">TMA Live</span>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-5">
+    <section class="glass-card p-4 rounded-2xl space-y-3">
+      <h2 class="text-sm font-bold text-zinc-200">Connect Profile</h2>
+      <div class="relative">
+        <span class="absolute left-3 top-3 text-zinc-500 text-sm">@</span>
+        <input id="usernameInput" type="text" placeholder="username" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-2.5 pl-7 pr-24 text-sm text-white focus:outline-none focus:border-pink-500" />
+        <button id="connectBtn" onclick="fetchInstagramData()" class="absolute right-1 top-1 bottom-1 px-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg text-xs font-semibold hover:opacity-90 active:scale-95 transition-all">Connect</button>
+      </div>
+    </section>
+
+    <section id="profileCard" class="hidden glass-card p-4 rounded-2xl space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-14 h-14 rounded-full insta-gradient p-[2px]">
+          <img id="userAvatar" src="" class="w-full h-full object-cover rounded-full bg-zinc-800" />
+        </div>
+        <div>
+          <h3 id="userFullName" class="font-bold text-sm text-white"></h3>
+          <p id="userHandle" class="text-xs text-zinc-400"></p>
+          <span class="inline-block mt-1 text-[9px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">Connected</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-center bg-zinc-900/80 p-2.5 rounded-xl border border-zinc-800 text-xs">
+        <div><p id="statPosts" class="font-bold text-white">0</p><span class="text-[10px] text-zinc-400">Posts</span></div>
+        <div><p id="statFollowers" class="font-bold text-white">0</p><span class="text-[10px] text-zinc-400">Followers</span></div>
+        <div><p id="statFollowing" class="font-bold text-white">0</p><span class="text-[10px] text-zinc-400">Following</span></div>
+      </div>
+
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Reels & Media</h4>
+        <div id="reelsGrid" class="grid grid-cols-3 gap-2"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+    lucide.createIcons();
+
+    async function fetchInstagramData() {
+      const username = document.getElementById('usernameInput').value.trim();
+      const btn = document.getElementById('connectBtn');
+      if (!username) return alert("Username enter karein!");
+
+      btn.innerText = "Fetching...";
+      btn.disabled = true;
+
+      // Replace this URL after backend deployment
+      const BACKEND_URL = `http://localhost:5000/api/instagram/${username}`;
+
+      try {
+        const response = await fetch(BACKEND_URL);
+        const result = await response.json();
+
+        if (result.success) {
+          const data = result.data;
+          document.getElementById('profileCard').classList.remove('hidden');
+          document.getElementById('userFullName').innerText = data.full_name;
+          document.getElementById('userHandle').innerText = '@' + data.username;
+          document.getElementById('userAvatar').src = data.profile_pic;
+          document.getElementById('statPosts').innerText = data.stats.posts;
+          document.getElementById('statFollowers').innerText = data.stats.followers;
+          document.getElementById('statFollowing').innerText = data.stats.following;
+
+          const grid = document.getElementById('reelsGrid');
+          grid.innerHTML = '';
+          data.reels.forEach(reel => {
+            grid.innerHTML += `
+              <div class="relative aspect-[9/16] bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
+                <img src="${reel.thumbnail}" class="w-full h-full object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
+                  <span class="text-[9px] font-bold text-white flex items-center gap-0.5">▶ ${reel.plays}</span>
+                </div>
+              </div>
+            `;
+          });
+          lucide.createIcons();
+        } else {
+          alert(result.message || "Profile fetch nahi ho saki.");
+        }
+      } catch (err) {
+        alert("Server connection error. Pehle backend server run karein.");
+      } finally {
+        btn.innerText = "Connect";
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
