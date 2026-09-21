@@ -63,59 +63,37 @@
   </main>
 
   <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
-    lucide.createIcons();
-
-    async function fetchInstagramData() {
-      const username = document.getElementById('usernameInput').value.trim();
-      const btn = document.getElementById('connectBtn');
-      if (!username) return alert("Username enter karein!");
-
-      btn.innerText = "Fetching...";
-      btn.disabled = true;
-
-      // Replace this URL after backend deployment
-      const BACKEND_URL = `https://insta-backend-1ig5.onrender.com/api/instagram/${username}`;
-
-
-      try {
-        const response = await fetch(BACKEND_URL);
-        const result = await response.json();
-
-        if (result.success) {
-          const data = result.data;
-          document.getElementById('profileCard').classList.remove('hidden');
-          document.getElementById('userFullName').innerText = data.full_name;
-          document.getElementById('userHandle').innerText = '@' + data.username;
-          document.getElementById('userAvatar').src = data.profile_pic;
-          document.getElementById('statPosts').innerText = data.stats.posts;
-          document.getElementById('statFollowers').innerText = data.stats.followers;
-          document.getElementById('statFollowing').innerText = data.stats.following;
-
-          const grid = document.getElementById('reelsGrid');
-          grid.innerHTML = '';
-          data.reels.forEach(reel => {
-            grid.innerHTML += `
-              <div class="relative aspect-[9/16] bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
-                <img src="${reel.thumbnail}" class="w-full h-full object-cover" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
-                  <span class="text-[9px] font-bold text-white flex items-center gap-0.5">▶ ${reel.plays}</span>
-                </div>
-              </div>
-            `;
-          });
-          lucide.createIcons();
-        } else {
-          alert(result.message || "Profile fetch nahi ho saki.");
-        }
-      } catch (err) {
-        alert("Server connection error. Pehle backend server run karein.");
-      } finally {
-        btn.innerText = "Connect";
-        btn.disabled = false;
-      }
+async function fetchProfile() {
+    const usernameInput = document.getElementById('usernameInput'); // Apne input ID ke hisab se confirm karein
+    const username = usernameInput ? usernameInput.value.trim() : 'b4nugcs';
+    
+    if (!username) {
+        alert("Please enter a valid Instagram username!");
+        return;
     }
-  </script>
+
+    const BACKEND_URL = `https://insta-backend-1ig5.onrender.com/api/instagram/${username}`;
+
+    try {
+        console.log("Fetching from:", BACKEND_URL);
+        const response = await fetch(BACKEND_URL);
+
+        if (!response.ok) {
+            throw new Error(`Server returned status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Profile Data:", data);
+
+        // Yahan par data render karne ka code
+        alert("Data Fetched Successfully! Check Console.");
+
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        alert("Connection Error: " + error.message);
+    }
+}
+</script>
+
 </body>
 </html>
